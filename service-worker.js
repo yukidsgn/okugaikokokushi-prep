@@ -1,5 +1,5 @@
 // File: service-worker.js
-const CACHE_NAME = "kakomon-v4"; // ★ファイル更新のたびに数字を上げる
+const CACHE_NAME = "kakomon-v5"; // ★ファイル更新のたびに数字を上げる
 const ASSETS = [
   "./index.html",
   "./app.js",
