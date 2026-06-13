@@ -1,18 +1,30 @@
 // File: app.js
 
-// ===== 設定：ここにスプレッドシートのCSV公開URLを貼る =====
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqKWSKO1H_h9D8f_EbcwYXUAD8PEebOBoKx4M1umpyp66LdnZrgfiRqsWecQDWWA/pub?gid=884265706&single=true&output=csv";
+// ===== 設定：スプレッドシートのCSV公開URLを貼る =====
+const CSV_URL = "ここにCSVのURLを貼る";
+
+// ===== 科目テーマカラー =====
+const SUBJECT_COLORS = {
+  "問題A_関係法規":   "#B8D77D",
+  "問題B_広告デザイン": "#B8D7FF",
+  "問題C_設計・施工":  "#FFC8AF"
+};
+const BASE_COLOR = "#CCB37E";
+function subjectColor(name) {
+  return SUBJECT_COLORS[name] || BASE_COLOR;
+}
+// 全ての問題用の特別キー
+const ALL_SUBJECTS = "__ALL__";
 
 // ===== 状態 =====
-let questions = [];      // 全問題
-let sortByWrong = false; // 並べ替え状態
+let questions = [];
+let sortByWrong = false;
 let selectedSubject = null;
-let testQueue = [];      // テスト中の10問
-let testIndex = 0;       // 今何問目
-let testCorrect = 0;     // 正解数
-let testSubject = null;  // テストの科目
+let testQueue = [];
+let testIndex = 0;
+let testCorrect = 0;
+let testSubject = null;
 
-// ===== 起動 =====
 window.addEventListener("load", init);
 
 async function init() {
@@ -29,7 +41,7 @@ async function init() {
   }
 }
 
-// ===== CSV解析（カンマ・改行・ダブルクオート対応の簡易版） =====
+// ===== CSV解析 =====
 function parseCSV(text) {
   const rows = [];
   let field = "", row = [], inQuotes = false;
@@ -58,17 +70,26 @@ function parseCSV(text) {
       subject: r[idx("科目")],
       question: r[idx("問題文")],
       choices: [r[idx("選択肢1")], r[idx("選択肢2")], r[idx("選択肢3")], r[idx("選択肢4")]],
-      answer: parseInt(r[idx("正解番号")], 10), // 1〜4
+      answer: parseInt(r[idx("正解番号")], 10),
       explanation: r[idx("解説")] || ""
     }));
 }
 
-// ===== 間違い回数（localStorage） =====
-function getWrongCount(id) {
-  return parseInt(localStorage.getItem("wrong_" + id) || "0", 10);
-}
-function addWrongCount(id) {
-  localStorage.setItem("wrong_" + id, getWrongCount(id) + 1);
+// ===== 履歴（localStorage） =====
+function getWrongCount(id) { return parseInt(localStorage.getItem("wrong_" + id) || "0", 10); }
+function addWrongCount(id) { localStorage.setItem("wrong_" + id, getWrongCount(id) + 1); }
+function getCorrectCount(id) { return parseInt(localStorage.getItem("correct_" + id) || "0", 10); }
+function addCorrectCount(id) { localStorage.setItem("correct_" + id, getCorrectCount(id) + 1); }
+
+function resetHistory() {
+  if (!confirm("間違い・正解の履歴をすべてリセットします。よろしいですか？")) return;
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k.startsWith("wrong_") || k.startsWith("correct_")) keys.push(k);
+  }
+  keys.forEach(k => localStorage.removeItem(k));
+  renderList();
 }
 
 // ===== タブ切替 =====
@@ -86,24 +107,29 @@ function showTab(tab) {
   if (listActive) renderList();
 }
 
-// ===== ① 一覧表示 =====
+// ===== ① 一覧 =====
 function renderList() {
   const area = document.getElementById("listArea");
   let list = [...questions];
-  if (sortByWrong) {
-    list.sort((a, b) => getWrongCount(b.id) - getWrongCount(a.id));
-  }
+  if (sortByWrong) list.sort((a, b) => getWrongCount(b.id) - getWrongCount(a.id));
   area.innerHTML = "";
   list.forEach(q => {
     const wrong = getWrongCount(q.id);
+    const correct = getCorrectCount(q.id);
+    const color = subjectColor(q.subject);
     const div = document.createElement("div");
     div.className = "card list-item";
+    div.style.background = color + "55"; // 背景を科目カラーの薄め
     div.innerHTML = `
-      <div>
-        <span class="subject-tag">${escapeHtml(q.subject)}</span><br>
-        ${escapeHtml(truncate(q.question, 40))}
+      <div class="meta">
+        <div class="id-tag">${escapeHtml(q.id)}</div>
+        <span class="subject-tag" style="background:${color};">${escapeHtml(q.subject)}</span>
+        <div>${escapeHtml(truncate(q.question, 40))}</div>
       </div>
-      ${wrong > 0 ? `<span class="badge">×${wrong}</span>` : ""}
+      <div class="counts">
+        ${correct > 0 ? `<span class="badge-correct">⭕${correct}</span>` : ""}
+        ${wrong > 0 ? `<span class="badge-wrong">×${wrong}</span>` : ""}
+      </div>
     `;
     div.onclick = () => showDetail(q.id);
     area.appendChild(div);
@@ -113,11 +139,11 @@ function renderList() {
 function toggleSort() {
   sortByWrong = !sortByWrong;
   document.getElementById("sortBtn").textContent =
-    sortByWrong ? "元の順に戻す" : "間違いが多い順に並べ替え";
+    sortByWrong ? "元の順に戻す" : "間違いが多い順に並び替え";
   renderList();
 }
 
-// ===== ① 詳細（1問挑戦） =====
+// ===== ① 詳細 =====
 function showDetail(id) {
   const q = questions.find(x => x.id === id);
   document.getElementById("listView").style.display = "none";
@@ -126,29 +152,38 @@ function showDetail(id) {
   renderQuestion(view, q, () => showTab("list"), false);
 }
 
-// ===== ② 10問テスト：科目ボタン =====
+// ===== ② 科目ボタン =====
 function buildSubjectButtons() {
   const subjects = [...new Set(questions.map(q => q.subject))];
   const box = document.getElementById("subjectButtons");
   box.innerHTML = "";
-  subjects.forEach(s => {
-    const b = document.createElement("button");
-    b.className = "btn sub";
-    b.textContent = s;
-    b.onclick = () => {
-      selectedSubject = s;
-      [...box.children].forEach(c => c.classList.add("sub"));
-      b.classList.remove("sub");
-      document.getElementById("startTestBtn").disabled = false;
-    };
-    box.appendChild(b);
-  });
+
+  subjects.forEach(s => box.appendChild(makeSubjectBtn(s, s, subjectColor(s))));
+  // 全ての問題ボタン
+  box.appendChild(makeSubjectBtn(ALL_SUBJECTS, "全ての問題に挑戦！", BASE_COLOR));
+}
+
+function makeSubjectBtn(value, label, color) {
+  const b = document.createElement("button");
+  b.className = "btn full";
+  b.style.background = color;
+  b.style.color = "#5a4a2a";
+  b.textContent = label;
+  b.onclick = () => {
+    selectedSubject = value;
+    [...document.getElementById("subjectButtons").children].forEach(c => c.style.outline = "none");
+    b.style.outline = "3px solid #5a4a2a";
+    document.getElementById("startTestBtn").disabled = false;
+  };
+  return b;
 }
 
 // ===== ② テスト開始 =====
 function startTest(subject) {
   testSubject = subject || selectedSubject;
-  const pool = questions.filter(q => q.subject === testSubject);
+  const pool = (testSubject === ALL_SUBJECTS)
+    ? [...questions]
+    : questions.filter(q => q.subject === testSubject);
   testQueue = shuffle([...pool]).slice(0, 10);
   testIndex = 0;
   testCorrect = 0;
@@ -173,6 +208,7 @@ function showTestResult() {
   const view = document.getElementById("testResultView");
   view.style.display = "block";
   const total = testQueue.length;
+  const label = (testSubject === ALL_SUBJECTS) ? "全ての問題" : testSubject;
   view.innerHTML = `
     <div class="card">
       <div class="score">${total}問中 ${testCorrect}問 正解！</div>
@@ -191,10 +227,10 @@ function backToTestSelect() {
   document.getElementById("testSelectView").style.display = "block";
 }
 
-// ===== 共通：1問を描画 =====
-// isTest=true のときは進捗表示＋自動で次へ
+// ===== 共通：1問描画 =====
 function renderQuestion(container, q, onNext, isTest) {
   let answered = false;
+  const color = subjectColor(q.subject);
   const progressHtml = isTest
     ? `<div class="progress">${testIndex + 1} / ${testQueue.length} 問目</div>`
     : "";
@@ -202,9 +238,12 @@ function renderQuestion(container, q, onNext, isTest) {
   container.innerHTML = `
     <div class="card">
       ${progressHtml}
-      <span class="subject-tag">${escapeHtml(q.subject)}</span>
-      <p style="font-size:17px; line-height:1.6;">${escapeHtml(q.question)}</p>
-      <div id="choices"></div>
+      <div class="question-area" style="background:${color}55;">
+        <div class="id-tag">${escapeHtml(q.id)}</div>
+        <span class="subject-tag" style="background:${color};">${escapeHtml(q.subject)}</span>
+        <p style="font-size:17px; line-height:1.7; margin:8px 0 0;">${escapeHtml(q.question)}</p>
+      </div>
+      <div id="choices" style="margin-top:12px;"></div>
       <div id="feedback"></div>
     </div>
   `;
@@ -220,12 +259,12 @@ function renderQuestion(container, q, onNext, isTest) {
       answered = true;
       const correct = num === q.answer;
       btn.classList.add(correct ? "correct" : "wrong");
-      // 正解ボタンも色付け
       if (!correct) {
         choicesBox.children[q.answer - 1].classList.add("correct");
         addWrongCount(q.id);
       } else {
-        testCorrectInc(isTest);
+        addCorrectCount(q.id);
+        if (isTest) testCorrect++;
       }
       showFeedback(container, q, correct, onNext, isTest);
     };
@@ -233,14 +272,12 @@ function renderQuestion(container, q, onNext, isTest) {
   });
 }
 
-function testCorrectInc(isTest) {
-  if (isTest) testCorrect++;
-}
-
 function showFeedback(container, q, correct, onNext, isTest) {
   const fb = container.querySelector("#feedback");
-  let html = `<div class="result-box ${correct ? "ok" : "ng"}">${correct ? "⭕ 正解！" : "❌ 不正解"}</div>`;
-  if (correct && q.explanation) {
+  const msg = correct ? "♪＼ 正解 ／♪" : "残念、不正解！ ( ｡•́ - •̀｡)ｼｭﾝ";
+  let html = `<div class="result-box ${correct ? "ok" : "ng"}">${msg}</div>`;
+  // 正解・不正解どちらでも解説を表示
+  if (q.explanation) {
     html += `<div class="explanation"><b>解説</b><br>${escapeHtml(q.explanation)}</div>`;
   }
   const nextLabel = isTest
@@ -266,7 +303,7 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s).replace(/'/g, "&#39;"); }
 
-// ===== PWA: Service Worker 登録 =====
+// ===== PWA =====
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js").catch(() => {});
 }
