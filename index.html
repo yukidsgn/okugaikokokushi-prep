@@ -9,6 +9,10 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>屋外広告士合格 App</title>
+  <!-- iOS Safari「ホーム画面に追加」時のアプリ名 -->
+  <meta name="apple-mobile-web-app-title" content="屋外広告士合格">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#CCB37E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -162,13 +166,13 @@
   <div class="container">
 
     <!-- 更新情報（手入力で書き換えてください） -->
-    <div class="update-banner">
+    <div class="update-banner" id="updateBanner">
       <div class="ttl">📢 更新情報</div>
       <div class="date">2026年6月14日 更新</div>
       <div class="body">2025年度の問題を追加しました。並び替え・ページ送り機能も使えます！</div>
     </div>
 
-    <div class="tabs">
+    <div class="tabs" id="tabs">
       <button class="tab-btn active" id="tabListBtn" onclick="showTab('list')">☁ 過去問題一覧 ☁</button>
       <button class="tab-btn" id="tabTestBtn" onclick="showTab('test')" style="white-space:nowrap;">🌸10問テストに挑戦🌸</button>
     </div>
@@ -202,6 +206,6 @@
   <footer>Built by yukidsgn (おゆき)</footer>
 
   <!-- ?v= の数字を更新のたびに変えると、古いキャッシュを確実に回避できます -->
-  <script src="app.js?v=20260614"></script>
+  <script src="app.js?v=20260614b"></script>
 </body>
 </html>

@@ -20,44 +20,44 @@ const SCORE_MESSAGES = {
   0: [
     "あきらめたらそこで試合終了ですよ",
     "まだあわてるような時間じゃない",
-    "ひとにできて、きみだけにできないなんてことあるもんか"
+    "ひとにできて、\nきみだけにできないなんてことあるもんか"
   ],
   1: [
-    "逃げちゃダメだ　逃げちゃダメだ　逃げちゃダメだ",
-    "人は思い出を忘れることで生きていける。だが、決して忘れてはならないこともある",
-    "いちばんいけないのは 自分なんかだめだと思いこむことだよ"
+    "逃げちゃダメだ　逃げちゃダメだ\n逃げちゃダメだ",
+    "人は思い出を忘れることで生きていける\nだが、決して忘れてはならないこともある",
+    "いちばんいけないのは\n自分なんかだめだと思いこむことだよ"
   ],
   2: [
-    "落ちこぼれだって必死で努力すりゃエリートを超えることがあるかもよ",
-    "真の失敗とはッ！ 開拓の心を忘れ！ 困難に挑戦する事に無縁のところにいる者たちの事をいうのだッ！"
+    "落ちこぼれだって\n必死で努力すりゃ\nエリートを超えることがあるかもよ",
+    "真の失敗とはッ！ \n開拓の心を忘れ！ \n困難に挑戦する事に\n無縁のところにいる者たちの事を\nいうのだッ！"
   ],
   3: [
     "心を燃やせ",
-    "生殺与奪の権を他人に握らせるな！！"
+    "生殺与奪の権を他人に握らせるな‼"
   ],
   4: [
-    "認めたくないものだな。自分自身の、若さゆえの過ちというものを",
-    "うちには点を取れる奴がいる　オレが30点も40点も入れる必要はない　オレはチームの主役じゃなくていい\n(　　´з｀）⊂（´∀｀　　）なんでやねん！"
+    "認めたくないものだな\n自分自身の、\n若さゆえの過ちというものを",
+    "うちには点を取れる奴がいる\nオレが30点も40点も入れる必要はない\nオレはチームの主役じゃなくていい\n(　´з｀）⊂（´∀｀　）なんでやねん‼"
   ],
   5: [
-    "悪くない……むしろ良い",
+    "悪くない……\nむしろ良い",
     "俺を天下に連れて行ってくれ"
   ],
   6: [
-    "そこにシビれる！あこがれるゥ！",
-    "屋外広告士に‼おれはなる‼"
+    "そこにシビれる！\nあこがれるゥ！",
+    "屋外広告士に‼\nおれはなる‼"
   ],
   7: [
-    "覚悟は良いか？オレはできてる",
-    "一度あったことは忘れないものさ……想い出せないだけで。"
+    "覚悟は良いか？\nオレはできてる",
+    "一度あったことは忘れないものさ……\n想い出せないだけで"
   ],
   8: [
     "勝てばよかろうなのだァァァァッ！！",
-    "私の夢は私の夢で終わらなければならないって誰が言ったの？"
+    "私の夢は\n私の夢で終わらなければならないって\n誰が言ったの？"
   ],
   9: [
     "真実はいつもひとつ！",
-    "もうこれで終わってもいい だからありったけを"
+    "もうこれで終わってもいい\nだからありったけを"
   ],
   10: [
     "おまえはもう合格している🌸",
@@ -266,11 +266,21 @@ function highlightSubjectButtons() {
   });
 }
 
+// ===== ヘッダーUI（更新情報・タブ）の表示/非表示 =====
+function setHeaderUI(visible) {
+  const banner = document.getElementById("updateBanner");
+  const tabs = document.getElementById("tabs");
+  if (banner) banner.style.display = visible ? "" : "none";
+  if (tabs) tabs.style.display = visible ? "" : "none";
+}
+
 // ===== タブ切替 =====
 function showTab(tab) {
   document.getElementById("detailView").style.display = "none";
   document.getElementById("testQuizView").style.display = "none";
   document.getElementById("testResultView").style.display = "none";
+
+  setHeaderUI(true); // 一覧・テスト選択ではヘッダーを表示
 
   const listActive = tab === "list";
   document.getElementById("tabListBtn").classList.toggle("active", listActive);
@@ -419,6 +429,7 @@ function showDetail(id) {
   savedScrollY = window.scrollY;
   const q = questions.find(x => x.id === id);
   document.getElementById("listView").style.display = "none";
+  setHeaderUI(false); // 問題を解く間は隠す
   const view = document.getElementById("detailView");
   view.style.display = "block";
   renderQuestion(view, q, backToListFromDetail, false);
@@ -427,6 +438,7 @@ function showDetail(id) {
 
 function backToListFromDetail() {
   document.getElementById("detailView").style.display = "none";
+  setHeaderUI(true); // 一覧に戻ったら表示
   document.getElementById("listView").style.display = "block";
   window.scrollTo(0, savedScrollY);
 }
@@ -442,6 +454,7 @@ function startTest(subject) {
   testCorrect = 0;
   document.getElementById("testSelectView").style.display = "none";
   document.getElementById("testResultView").style.display = "none";
+  setHeaderUI(false); // テスト出題中は隠す
   showTestQuestion();
 }
 
@@ -460,6 +473,7 @@ function showTestQuestion() {
 
 function showTestResult() {
   document.getElementById("testQuizView").style.display = "none";
+  setHeaderUI(true); // 結果画面ではヘッダーを表示
   const view = document.getElementById("testResultView");
   view.style.display = "block";
   const total = testQueue.length;
@@ -478,6 +492,7 @@ function showTestResult() {
 function backToTestSelect() {
   document.getElementById("testResultView").style.display = "none";
   document.getElementById("testQuizView").style.display = "none";
+  setHeaderUI(true); // 科目選択ではヘッダーを表示
   selectedSubject = null;
   const startBtn = document.getElementById("startTestBtn");
   if (startBtn) startBtn.disabled = true;

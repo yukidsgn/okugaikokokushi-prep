@@ -34,9 +34,9 @@ self.addEventListener("fetch", e => {
   // GET以外は何もしない
   if (req.method !== "GET") return;
 
-  // 自分のサイト以外（Googleスプレッドシートのcsv・Webフォント等）は素通し＝常に最新
+  // 自分のサイト以外（スプレッドシートのcsv・Webフォント等）は素通し＝常に最新
   if (url.origin !== self.location.origin) {
-    return; // ブラウザ既定の通信に任せる
+    return;
   }
 
   // HTML / JS はネットワーク優先（最新を取りに行く → 取れたらキャッシュ更新）
@@ -54,12 +54,12 @@ self.addEventListener("fetch", e => {
           caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(req)) // オフライン時はキャッシュ
+        .catch(() => caches.match(req))
     );
     return;
   }
 
-  // その他（画像・manifest等）はキャッシュ優先（速度重視）。無ければ取得してキャッシュ
+  // その他（画像・manifest等）はキャッシュ優先。無ければ取得してキャッシュ
   e.respondWith(
     caches.match(req).then(cached => {
       if (cached) return cached;
