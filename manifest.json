@@ -1,18 +1,18 @@
 {
-  "name": "資格過去問アプリ",
-  "short_name": "過去問",
+  "name": "屋外広告士合格 App",
+  "short_name": "屋外広告士",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4f6f9",
-  "theme_color": "#2c7be5",
+  "background_color": "#f6f3ec",
+  "theme_color": "#CCB37E",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

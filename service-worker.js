@@ -1,5 +1,5 @@
 // File: service-worker.js
-const CACHE_NAME = "kakomon-v2";
+const CACHE_NAME = "kakomon-v3";
 const ASSETS = [
   "./index.html",
   "./app.js",
