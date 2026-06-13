@@ -20,24 +20,24 @@ const SCORE_MESSAGES = {
   0: [
     "あきらめたらそこで試合終了ですよ",
     "まだあわてるような時間じゃない",
-    "ひとにできて、\nきみだけにできないなんてことあるもんか"
+    "ひとにできて、きみだけにできないなんてことあるもんか"
   ],
   1: [
     "逃げちゃダメだ　逃げちゃダメだ\n逃げちゃダメだ",
-    "人は思い出を忘れることで生きていける\nだが、決して忘れてはならないこともある",
-    "いちばんいけないのは\n自分なんかだめだと思いこむことだよ"
+    "人は思い出を忘れることで\n生きていける\nだが、\n決して忘れてはならないこともある",
+    "いちばんいけないのは\n自分なんかだめだと\n思いこむことだよ"
   ],
   2: [
-    "落ちこぼれだって\n必死で努力すりゃ\nエリートを超えることがあるかもよ",
-    "真の失敗とはッ！ \n開拓の心を忘れ！ \n困難に挑戦する事に\n無縁のところにいる者たちの事を\nいうのだッ！"
+    "落ちこぼれだって\n必死で努力すりゃ\nエリートを超えることが\nあるかもよ",
+    "真の失敗とはッ！\n開拓の心を忘れ！\n困難に挑戦する事に\n無縁のところにいる\n者たちの事をいうのだッ！"
   ],
   3: [
-    "心を燃やせ",
-    "生殺与奪の権を他人に握らせるな‼"
+    "心を燃やせ❤",
+    "生殺与奪の権を\n他人に握らせるな‼"
   ],
   4: [
     "認めたくないものだな\n自分自身の、\n若さゆえの過ちというものを",
-    "うちには点を取れる奴がいる\nオレが30点も40点も入れる必要はない\nオレはチームの主役じゃなくていい\n(　´з｀）⊂（´∀｀　）なんでやねん‼"
+    "うちには点を取れる奴がいる\nオレが30点も40点も入れる必要はない\nオレはチームの主役じゃなくていい\n(　´з｀）⊂（´∀｀　）なんでやねん！"
   ],
   5: [
     "悪くない……\nむしろ良い",
@@ -52,7 +52,7 @@ const SCORE_MESSAGES = {
     "一度あったことは忘れないものさ……\n想い出せないだけで"
   ],
   8: [
-    "勝てばよかろうなのだァァァァッ！！",
+    "勝てばよかろうなのだァァァァッ‼",
     "私の夢は\n私の夢で終わらなければならないって\n誰が言ったの？"
   ],
   9: [
@@ -61,7 +61,7 @@ const SCORE_MESSAGES = {
   ],
   10: [
     "おまえはもう合格している🌸",
-    "だいじょうぶます こわくない🌸"
+    "だいじょうぶます\nこわくない🌸"
   ]
 };
 
@@ -77,7 +77,7 @@ let currentPage = 1;
 
 // ===== 状態 =====
 let questions = [];
-let sortMode = "year_desc";  // 初期は出題年数_降順（新しい順）
+let sortMode = "year_desc";
 let selectedSubject = null;
 let testQueue = [];
 let testIndex = 0;
@@ -266,7 +266,7 @@ function highlightSubjectButtons() {
   });
 }
 
-// ===== ヘッダーUI（更新情報・タブ）の表示/非表示 =====
+// 更新情報・タブの表示/非表示を切り替える
 function setHeaderUI(visible) {
   const banner = document.getElementById("updateBanner");
   const tabs = document.getElementById("tabs");
@@ -473,7 +473,7 @@ function showTestQuestion() {
 
 function showTestResult() {
   document.getElementById("testQuizView").style.display = "none";
-  setHeaderUI(true); // 結果画面ではヘッダーを表示
+  setHeaderUI(false); // 結果画面でも更新情報・タブは隠す
   const view = document.getElementById("testResultView");
   view.style.display = "block";
   const total = testQueue.length;
@@ -487,6 +487,7 @@ function showTestResult() {
       <button class="btn full sub" onclick="showTab('list')">最初の画面に戻る</button>
     </div>
   `;
+  window.scrollTo(0, 0);
 }
 
 function backToTestSelect() {
