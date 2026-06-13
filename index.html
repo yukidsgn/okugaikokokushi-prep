@@ -13,9 +13,6 @@
   <style>
     :root {
       --c-base: #CCB37E;
-      --c-a: #B8D77D;
-      --c-b: #B8D7FF;
-      --c-c: #FFC8AF;
       --radius: 999px;
     }
     * { box-sizing: border-box; }
@@ -62,12 +59,12 @@
     }
     .counts { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
     .badge-wrong {
-      background: #ffe3e3; color: #e03131; border-radius: var(--radius);
-      padding: 2px 11px; font-size: 13px; font-weight: 700; white-space: nowrap;
+      background: #ffe3e3; color: #d6336c; border-radius: var(--radius);
+      padding: 2px 10px; font-size: 13px; font-weight: 700; white-space: nowrap;
     }
     .badge-correct {
       background: #ebfbee; color: #2f9e44; border-radius: var(--radius);
-      padding: 2px 11px; font-size: 13px; font-weight: 700; white-space: nowrap;
+      padding: 2px 10px; font-size: 13px; font-weight: 700; white-space: nowrap;
     }
     .choice-btn {
       display: block; width: 100%; text-align: left; padding: 14px;
@@ -83,10 +80,8 @@
     .explanation { background: #fff9db; padding: 12px; border-radius: 16px; margin-top: 10px; line-height: 1.6; }
     .progress { font-size: 14px; color: #777; margin-bottom: 10px; font-weight: 700; }
     .score { font-size: 28px; font-weight: 700; text-align: center; margin: 20px 0; }
-    .question-area { padding: 16px; border-radius: 16px; }
     .loading { text-align: center; padding: 40px; color: #999; line-height: 1.6; }
 
-    /* 並び替えメニュー */
     .sort-wrap { margin-bottom: 12px; }
     .sort-toggle {
       width: 100%; padding: 12px; border: none; border-radius: var(--radius);
@@ -107,26 +102,16 @@
     .sort-menu button.active { background: #ece3d0; font-weight: 700; }
     .sort-menu .label { font-size: 12px; color: #999; padding: 8px 14px 4px; }
 
-    /* 年見出し */
     .year-head {
       font-size: 16px; font-weight: 700; color: #8a7340;
       margin: 14px 4px 8px; padding-bottom: 6px; border-bottom: 2px solid #e6ddcb;
     }
 
-    /* 戻るボタン */
     .back-bar { margin-top: 16px; }
     .back-btn {
       padding: 12px 24px; border: none; border-radius: var(--radius);
       background: #b7a98a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
     }
-
-    /* 解答履歴リセット（控えめ・下部） */
-    .reset-area { text-align: center; margin: 24px 0 8px; }
-    .reset-link {
-      background: none; border: none; color: #b0a288; font-size: 12px;
-      text-decoration: underline; cursor: pointer;
-    }
-    .reset-link:hover { color: #8a7340; }
   </style>
 </head>
 <body>
@@ -143,21 +128,16 @@
 
     <div id="loading" class="loading">問題を読み込み中…</div>
 
-    <!-- ① 一覧 -->
     <div id="listView" style="display:none;">
       <div class="sort-wrap">
-        <button class="sort-toggle" id="sortToggle" onclick="toggleSortMenu()">
-          並び替え・絞り込み ▼
-        </button>
+        <button class="sort-toggle" id="sortToggle" onclick="toggleSortMenu()">並び替え ▼</button>
         <div class="sort-menu" id="sortMenu"></div>
       </div>
       <div id="listArea"></div>
     </div>
 
-    <!-- ① 詳細 -->
     <div id="detailView" style="display:none;"></div>
 
-    <!-- ② テスト：科目選択 -->
     <div id="testSelectView" style="display:none;">
       <div class="card">
         <p style="font-weight:700;">科目を選んでね♪</p>
@@ -166,16 +146,8 @@
       </div>
     </div>
 
-    <!-- ② テスト：出題中 -->
     <div id="testQuizView" style="display:none;"></div>
-
-    <!-- ② テスト：結果 -->
     <div id="testResultView" style="display:none;"></div>
-
-    <!-- 解答履歴リセット（最下部・控えめ） -->
-    <div class="reset-area">
-      <button class="reset-link" onclick="resetHistory()">解答履歴をリセット</button>
-    </div>
 
   </div>
 
