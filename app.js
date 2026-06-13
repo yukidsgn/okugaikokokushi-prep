@@ -5,15 +5,14 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqKWSKO1H_h9D8
 
 // ===== 科目テーマカラー =====
 const SUBJECT_COLORS = {
-  "問題A_関係法規":   "#B8D77D",
+  "問題A_関係法規":    "#B8D77D",
   "問題B_広告デザイン": "#B8D7FF",
-  "問題C_設計・施工":  "#FFC8AF"
+  "問題C_設計・施工":   "#FFC8AF"
 };
 const BASE_COLOR = "#CCB37E";
 function subjectColor(name) {
   return SUBJECT_COLORS[name] || BASE_COLOR;
 }
-// 全ての問題用の特別キー
 const ALL_SUBJECTS = "__ALL__";
 
 // ===== 状態 =====
@@ -30,14 +29,24 @@ window.addEventListener("load", init);
 async function init() {
   try {
     const res = await fetch(CSV_URL);
+    if (!res.ok) {
+      throw new Error("サーバー応答エラー: " + res.status);
+    }
     const text = await res.text();
+    if (text.trim().length === 0) {
+      throw new Error("CSVが空でした。公開設定を確認してください。");
+    }
     questions = parseCSV(text);
+    if (questions.length === 0) {
+      throw new Error("問題が0件でした。列名（id・科目・問題文…）を確認してください。");
+    }
     document.getElementById("loading").style.display = "none";
     buildSubjectButtons();
     showTab("list");
   } catch (e) {
-    document.getElementById("loading").textContent =
-      "読み込みに失敗しました。CSV_URL の設定を確認してください。";
+    document.getElementById("loading").innerHTML =
+      "読み込みに失敗しました。<br>原因: " + escapeHtml(e.message) +
+      "<br><br>CSV_URL の設定、または「ウェブに公開」の状態を確認してください。";
   }
 }
 
@@ -119,7 +128,7 @@ function renderList() {
     const color = subjectColor(q.subject);
     const div = document.createElement("div");
     div.className = "card list-item";
-    div.style.background = color + "55"; // 背景を科目カラーの薄め
+    div.style.background = color + "55";
     div.innerHTML = `
       <div class="meta">
         <div class="id-tag">${escapeHtml(q.id)}</div>
@@ -157,9 +166,7 @@ function buildSubjectButtons() {
   const subjects = [...new Set(questions.map(q => q.subject))];
   const box = document.getElementById("subjectButtons");
   box.innerHTML = "";
-
   subjects.forEach(s => box.appendChild(makeSubjectBtn(s, s, subjectColor(s))));
-  // 全ての問題ボタン
   box.appendChild(makeSubjectBtn(ALL_SUBJECTS, "全ての問題に挑戦！", BASE_COLOR));
 }
 
@@ -208,7 +215,6 @@ function showTestResult() {
   const view = document.getElementById("testResultView");
   view.style.display = "block";
   const total = testQueue.length;
-  const label = (testSubject === ALL_SUBJECTS) ? "全ての問題" : testSubject;
   view.innerHTML = `
     <div class="card">
       <div class="score">${total}問中 ${testCorrect}問 正解！</div>
@@ -276,7 +282,6 @@ function showFeedback(container, q, correct, onNext, isTest) {
   const fb = container.querySelector("#feedback");
   const msg = correct ? "♪＼ 正解 ／♪" : "残念、不正解！ ( ｡•́ - •̀｡)ｼｭﾝ";
   let html = `<div class="result-box ${correct ? "ok" : "ng"}">${msg}</div>`;
-  // 正解・不正解どちらでも解説を表示
   if (q.explanation) {
     html += `<div class="explanation"><b>解説</b><br>${escapeHtml(q.explanation)}</div>`;
   }
