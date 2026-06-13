@@ -105,6 +105,7 @@ function resetHistory() {
     if (k.startsWith("wrong_") || k.startsWith("correct_")) keys.push(k);
   }
   keys.forEach(k => localStorage.removeItem(k));
+  document.getElementById("sortMenu").classList.remove("open");
   renderList();
 }
 
@@ -158,6 +159,49 @@ function highlightSortMenu() {
   const menu = document.getElementById("sortMenu");
   menu.querySelectorAll("button[data-mode]").forEach(b => {
     b.classList.toggle("active", b.dataset.mode === sortMode);
+  });
+}
+
+// ===== 科目選択ボタン（テスト用） =====
+function buildSubjectButtons() {
+  const box = document.getElementById("subjectButtons");
+  if (!box) return;
+  const subjects = [
+    { key: "問題A_関係法規",    label: "問題A_関係法規" },
+    { key: "問題B_広告デザイン", label: "問題B_広告デザイン" },
+    { key: "問題C_設計・施工",   label: "問題C_設計・施工" },
+    { key: ALL_SUBJECTS,        label: "すべての科目から" }
+  ];
+  box.innerHTML = "";
+  subjects.forEach(s => {
+    const btn = document.createElement("button");
+    btn.className = "btn full sub";
+    btn.textContent = s.label;
+    btn.dataset.subject = s.key;
+    if (s.key !== ALL_SUBJECTS) {
+      btn.style.background = subjectColor(s.key);
+      btn.style.color = "#5a4a2a";
+    }
+    btn.onclick = () => selectSubject(s.key);
+    box.appendChild(btn);
+  });
+  highlightSubjectButtons();
+}
+
+function selectSubject(key) {
+  selectedSubject = key;
+  highlightSubjectButtons();
+  const startBtn = document.getElementById("startTestBtn");
+  if (startBtn) startBtn.disabled = false;
+}
+
+function highlightSubjectButtons() {
+  const box = document.getElementById("subjectButtons");
+  if (!box) return;
+  box.querySelectorAll("button[data-subject]").forEach(b => {
+    const isSel = b.dataset.subject === selectedSubject;
+    b.style.outline = isSel ? "3px solid var(--c-base)" : "none";
+    b.style.outlineOffset = isSel ? "2px" : "0";
   });
 }
 
@@ -259,30 +303,6 @@ function backToListFromDetail() {
   window.scrollTo(0, savedScrollY);
 }
 
-// ===== ② 科目ボタン =====
-function buildSubjectButtons() {
-  const subjects = [...new Set(questions.map(q => q.subject))];
-  const box = document.getElementById("subjectButtons");
-  box.innerHTML = "";
-  subjects.forEach(s => box.appendChild(makeSubjectBtn(s, s, subjectColor(s))));
-  box.appendChild(makeSubjectBtn(ALL_SUBJECTS, "全ての問題に挑戦！", BASE_COLOR));
-}
-
-function makeSubjectBtn(value, label, color) {
-  const b = document.createElement("button");
-  b.className = "btn full";
-  b.style.background = color;
-  b.style.color = "#5a4a2a";
-  b.textContent = label;
-  b.onclick = () => {
-    selectedSubject = value;
-    [...document.getElementById("subjectButtons").children].forEach(c => c.style.outline = "none");
-    b.style.outline = "3px solid #5a4a2a";
-    document.getElementById("startTestBtn").disabled = false;
-  };
-  return b;
-}
-
 // ===== ② テスト開始 =====
 function startTest(subject) {
   testSubject = subject || selectedSubject;
@@ -327,10 +347,19 @@ function showTestResult() {
 
 function backToTestSelect() {
   document.getElementById("testResultView").style.display = "none";
+  document.getElementById("testQuizView").style.display = "none";
   selectedSubject = null;
-  document.getElementById("startTestBtn").disabled = true;
+  const startBtn = document.getElementById("startTestBtn");
+  if (startBtn) startBtn.disabled = true;
   buildSubjectButtons();
   document.getElementById("testSelectView").style.display = "block";
+  window.scrollTo(0, 0);
+}
+
+// テスト中断して科目選択に戻る
+function abortTest() {
+  if (!confirm("テストを中断して科目選択に戻りますか？\n（このテストの進捗は保存されません）")) return;
+  backToTestSelect();
 }
 
 // ===== 共通：1問描画 =====
@@ -341,6 +370,11 @@ function renderQuestion(container, q, onNext, isTest) {
     ? `<div class="progress">${testIndex + 1} / ${testQueue.length} 問目</div>`
     : "";
 
+  // 戻るボタン：一覧詳細は「一覧に戻る」、テストは「テストを中断して戻る」
+  const backBtnHtml = isTest
+    ? `<div class="back-bar"><button class="back-btn" id="backBtn">← テストを中断して戻る</button></div>`
+    : `<div class="back-bar"><button class="back-btn" id="backBtn">← 戻る</button></div>`;
+
   container.innerHTML = `
     <div class="card" style="background:${color}55;">
       ${progressHtml}
@@ -349,7 +383,7 @@ function renderQuestion(container, q, onNext, isTest) {
       <p style="font-size:17px; line-height:1.7; margin:8px 0 0;">${emphasize(q.question)}</p>
       <div id="choices" style="margin-top:12px;"></div>
       <div id="feedback"></div>
-      ${isTest ? "" : `<div class="back-bar"><button class="back-btn" id="backBtn">← 戻る</button></div>`}
+      ${backBtnHtml}
     </div>
   `;
 
@@ -376,8 +410,10 @@ function renderQuestion(container, q, onNext, isTest) {
     choicesBox.appendChild(btn);
   });
 
-  if (!isTest) {
-    container.querySelector("#backBtn").onclick = onNext;
+  // 戻るボタンの動作
+  const backBtn = container.querySelector("#backBtn");
+  if (backBtn) {
+    backBtn.onclick = isTest ? abortTest : backToListFromDetail;
   }
 }
 
