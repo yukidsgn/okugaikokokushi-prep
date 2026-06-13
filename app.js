@@ -1,7 +1,7 @@
 // File: app.js
 
 // ===== 設定：スプレッドシートのCSV公開URLを貼る =====
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqKWSKO1H_h9D8f_EbcwYXUAD8PEebOBoKx4M1umpyp66LdnZrgfiRqsWecQDWWA/pub?gid=884265706&single=true&output=csv";
+const CSV_URL = "ここにCSVのURLを貼る";
 
 // ===== 科目テーマカラー =====
 const SUBJECT_COLORS = {
@@ -17,31 +17,28 @@ const ALL_SUBJECTS = "__ALL__";
 
 // ===== 状態 =====
 let questions = [];
-let sortByWrong = false;
+let sortMode = "standard";
+let filterSubject = null;
 let selectedSubject = null;
 let testQueue = [];
 let testIndex = 0;
 let testCorrect = 0;
 let testSubject = null;
+let savedScrollY = 0;
 
 window.addEventListener("load", init);
 
 async function init() {
   try {
     const res = await fetch(CSV_URL);
-    if (!res.ok) {
-      throw new Error("サーバー応答エラー: " + res.status);
-    }
+    if (!res.ok) throw new Error("サーバー応答エラー: " + res.status);
     const text = await res.text();
-    if (text.trim().length === 0) {
-      throw new Error("CSVが空でした。公開設定を確認してください。");
-    }
+    if (text.trim().length === 0) throw new Error("CSVが空でした。公開設定を確認してください。");
     questions = parseCSV(text);
-    if (questions.length === 0) {
-      throw new Error("問題が0件でした。列名（id・科目・問題文…）を確認してください。");
-    }
+    if (questions.length === 0) throw new Error("問題が0件でした。列名を確認してください。");
     document.getElementById("loading").style.display = "none";
     buildSubjectButtons();
+    buildSortMenu();
     showTab("list");
   } catch (e) {
     document.getElementById("loading").innerHTML =
@@ -84,6 +81,11 @@ function parseCSV(text) {
     }));
 }
 
+function getYear(id) {
+  const m = String(id).match(/^(\d{4})/);
+  return m ? m[1] : "その他";
+}
+
 // ===== 履歴（localStorage） =====
 function getWrongCount(id) { return parseInt(localStorage.getItem("wrong_" + id) || "0", 10); }
 function addWrongCount(id) { localStorage.setItem("wrong_" + id, getWrongCount(id) + 1); }
@@ -91,7 +93,7 @@ function getCorrectCount(id) { return parseInt(localStorage.getItem("correct_" +
 function addCorrectCount(id) { localStorage.setItem("correct_" + id, getCorrectCount(id) + 1); }
 
 function resetHistory() {
-  if (!confirm("間違い・正解の履歴をすべてリセットします。よろしいですか？")) return;
+  if (!confirm("正解・不正解の解答履歴をすべてリセットします。よろしいですか？")) return;
   const keys = [];
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
@@ -99,6 +101,60 @@ function resetHistory() {
   }
   keys.forEach(k => localStorage.removeItem(k));
   renderList();
+}
+
+// ===== 並び替えメニュー =====
+function buildSortMenu() {
+  const menu = document.getElementById("sortMenu");
+  const subjects = [...new Set(questions.map(q => q.subject))];
+  let html = `
+    <div class="label">並び替え</div>
+    <button data-mode="standard" onclick="setSort('standard')">標準（年ごと）</button>
+    <button data-mode="wrong" onclick="setSort('wrong')">間違いが多い順に</button>
+    <div class="label">科目で絞り込み</div>
+  `;
+  subjects.forEach(s => {
+    html += `<button data-subject="${escapeAttr(s)}" onclick="setSubjectFilter('${escapeAttr(s)}')">${escapeHtml(s)}</button>`;
+  });
+  menu.innerHTML = html;
+}
+
+function toggleSortMenu() {
+  document.getElementById("sortMenu").classList.toggle("open");
+}
+
+function updateSortToggleLabel() {
+  let label = "標準（年ごと）";
+  if (sortMode === "wrong") label = "間違いが多い順";
+  if (sortMode === "subject") label = "科目：" + filterSubject;
+  document.getElementById("sortToggle").innerHTML = "並び替え・絞り込み：" + escapeHtml(label) + " ▼";
+}
+
+function setSort(mode) {
+  sortMode = mode;
+  filterSubject = null;
+  document.getElementById("sortMenu").classList.remove("open");
+  updateSortToggleLabel();
+  highlightSortMenu();
+  renderList();
+}
+
+function setSubjectFilter(subject) {
+  sortMode = "subject";
+  filterSubject = subject;
+  document.getElementById("sortMenu").classList.remove("open");
+  updateSortToggleLabel();
+  highlightSortMenu();
+  renderList();
+}
+
+function highlightSortMenu() {
+  const menu = document.getElementById("sortMenu");
+  menu.querySelectorAll("button").forEach(b => {
+    const isMode = b.dataset.mode && b.dataset.mode === sortMode;
+    const isSub = b.dataset.subject && sortMode === "subject" && b.dataset.subject === filterSubject;
+    b.classList.toggle("active", isMode || isSub);
+  });
 }
 
 // ===== タブ切替 =====
@@ -119,46 +175,72 @@ function showTab(tab) {
 // ===== ① 一覧 =====
 function renderList() {
   const area = document.getElementById("listArea");
-  let list = [...questions];
-  if (sortByWrong) list.sort((a, b) => getWrongCount(b.id) - getWrongCount(a.id));
   area.innerHTML = "";
-  list.forEach(q => {
-    const wrong = getWrongCount(q.id);
-    const correct = getCorrectCount(q.id);
-    const color = subjectColor(q.subject);
-    const div = document.createElement("div");
-    div.className = "card list-item";
-    div.style.background = color + "55";
-    div.innerHTML = `
-      <div class="meta">
-        <div class="id-tag">${escapeHtml(q.id)}</div>
-        <span class="subject-tag" style="background:${color};">${escapeHtml(q.subject)}</span>
-        <div>${escapeHtml(truncate(q.question, 40))}</div>
-      </div>
-      <div class="counts">
-        ${correct > 0 ? `<span class="badge-correct">⭕${correct}</span>` : ""}
-        ${wrong > 0 ? `<span class="badge-wrong">×${wrong}</span>` : ""}
-      </div>
-    `;
-    div.onclick = () => showDetail(q.id);
-    area.appendChild(div);
-  });
+
+  let list = [...questions];
+
+  if (sortMode === "wrong") {
+    list.sort((a, b) => getWrongCount(b.id) - getWrongCount(a.id));
+    list.forEach(q => area.appendChild(makeListItem(q)));
+
+  } else if (sortMode === "subject") {
+    list = list.filter(q => q.subject === filterSubject);
+    list.forEach(q => area.appendChild(makeListItem(q)));
+
+  } else {
+    list.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    let currentYear = null;
+    list.forEach(q => {
+      const year = getYear(q.id);
+      if (year !== currentYear) {
+        currentYear = year;
+        const head = document.createElement("div");
+        head.className = "year-head";
+        head.textContent = (year === "その他") ? "その他" : year + "年 出題";
+        area.appendChild(head);
+      }
+      area.appendChild(makeListItem(q));
+    });
+  }
 }
 
-function toggleSort() {
-  sortByWrong = !sortByWrong;
-  document.getElementById("sortBtn").textContent =
-    sortByWrong ? "元の順に戻す" : "間違いが多い順に並び替え";
-  renderList();
+function makeListItem(q) {
+  const wrong = getWrongCount(q.id);
+  const correct = getCorrectCount(q.id);
+  const color = subjectColor(q.subject);
+  const div = document.createElement("div");
+  div.className = "card list-item";
+  div.style.background = color + "55";
+  div.innerHTML = `
+    <div class="meta">
+      <div class="id-tag">${escapeHtml(q.id)}</div>
+      <span class="subject-tag" style="background:${color};">${escapeHtml(q.subject)}</span>
+      <div>${escapeHtml(truncate(q.question, 40))}</div>
+    </div>
+    <div class="counts">
+      ${correct > 0 ? `<span class="badge-correct">◯ ${correct}</span>` : ""}
+      ${wrong > 0 ? `<span class="badge-wrong">✕ ${wrong}</span>` : ""}
+    </div>
+  `;
+  div.onclick = () => showDetail(q.id);
+  return div;
 }
 
 // ===== ① 詳細 =====
 function showDetail(id) {
+  savedScrollY = window.scrollY;
   const q = questions.find(x => x.id === id);
   document.getElementById("listView").style.display = "none";
   const view = document.getElementById("detailView");
   view.style.display = "block";
-  renderQuestion(view, q, () => showTab("list"), false);
+  renderQuestion(view, q, backToListFromDetail, false);
+  window.scrollTo(0, 0);
+}
+
+function backToListFromDetail() {
+  document.getElementById("detailView").style.display = "none";
+  document.getElementById("listView").style.display = "block";
+  window.scrollTo(0, savedScrollY);
 }
 
 // ===== ② 科目ボタン =====
@@ -207,7 +289,9 @@ function showTestQuestion() {
     testIndex++;
     if (testIndex < testQueue.length) showTestQuestion();
     else showTestResult();
+    window.scrollTo(0, 0);
   }, true);
+  window.scrollTo(0, 0);
 }
 
 function showTestResult() {
@@ -242,15 +326,14 @@ function renderQuestion(container, q, onNext, isTest) {
     : "";
 
   container.innerHTML = `
-    <div class="card">
+    <div class="card" style="background:${color}55;">
       ${progressHtml}
-      <div class="question-area" style="background:${color}55;">
-        <div class="id-tag">${escapeHtml(q.id)}</div>
-        <span class="subject-tag" style="background:${color};">${escapeHtml(q.subject)}</span>
-        <p style="font-size:17px; line-height:1.7; margin:8px 0 0;">${escapeHtml(q.question)}</p>
-      </div>
+      <div class="id-tag">${escapeHtml(q.id)}</div>
+      <span class="subject-tag" style="background:${color};">${escapeHtml(q.subject)}</span>
+      <p style="font-size:17px; line-height:1.7; margin:8px 0 0;">${emphasize(q.question)}</p>
       <div id="choices" style="margin-top:12px;"></div>
       <div id="feedback"></div>
+      ${isTest ? "" : `<div class="back-bar"><button class="back-btn" id="backBtn">← 戻る</button></div>`}
     </div>
   `;
 
@@ -276,6 +359,17 @@ function renderQuestion(container, q, onNext, isTest) {
     };
     choicesBox.appendChild(btn);
   });
+
+  if (!isTest) {
+    container.querySelector("#backBtn").onclick = onNext;
+  }
+}
+
+function emphasize(text) {
+  let s = escapeHtml(text);
+  s = s.replace(/適切でないもの/g, "<b>適切でないもの</b>");
+  s = s.replace(/(?<!でない>)適切なもの/g, "<b>適切なもの</b>");
+  return s;
 }
 
 function showFeedback(container, q, correct, onNext, isTest) {
