@@ -1,7 +1,7 @@
 // File: app.js
 
 // ===== 設定：スプレッドシートのCSV公開URLを貼る =====
-const CSV_URL = "ここにCSVのURLを貼る";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqKWSKO1H_h9D8f_EbcwYXUAD8PEebOBoKx4M1umpyp66LdnZrgfiRqsWecQDWWA/pub?gid=884265706&single=true&output=csv";
 
 // ===== 科目テーマカラー =====
 const SUBJECT_COLORS = {
