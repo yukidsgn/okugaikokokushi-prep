@@ -1,20 +1,24 @@
 {
   "name": "屋外広告士合格 App",
-  "short_name": "屋外広告士",
+  "short_name": "屋外広告士合格",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f6f3ec",
   "theme_color": "#CCB37E",
+  "lang": "ja",
   "icons": [
     {
       "src": "logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "logo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

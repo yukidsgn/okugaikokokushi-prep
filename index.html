@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#CCB37E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700&display=swap" rel="stylesheet">
   <style>
     :root {
       --c-base: #CCB37E;
@@ -135,10 +135,10 @@
       background: #b7a98a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
     }
 
-    /* ページネーション（Google検索風） */
+    /* ページネーション（Google検索風・角Rマックス） */
     .pager { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px; margin: 18px 0 8px; }
     .pager button {
-      min-width: 38px; padding: 8px 12px; border: none; border-radius: 12px;
+      min-width: 38px; padding: 8px 14px; border: none; border-radius: 999px;
       background: #ece3d0; color: #8a7340; font-size: 14px; font-weight: 700; cursor: pointer;
     }
     .pager button:hover { background: #e0d4ba; }
@@ -149,7 +149,7 @@
     /* フッター */
     footer {
       text-align: center; padding: 22px 16px 28px; color: #8a7340;
-      font-family: "Orbitron", sans-serif; font-weight: 600;
+      font-family: "Zen Kaku Gothic New", sans-serif; font-weight: 700;
       font-size: 14px; letter-spacing: 1px;
     }
   </style>
@@ -170,7 +170,7 @@
 
     <div class="tabs">
       <button class="tab-btn active" id="tabListBtn" onclick="showTab('list')">☁ 過去問題一覧 ☁</button>
-      <button class="tab-btn" id="tabTestBtn" onclick="showTab('test')">🌸 10問テストに挑戦 🌸</button>
+      <button class="tab-btn" id="tabTestBtn" onclick="showTab('test')" style="white-space:nowrap;">🌸10問テストに挑戦🌸</button>
     </div>
 
     <div id="loading" class="loading">問題を読み込み中…</div>
@@ -199,7 +199,7 @@
 
   </div>
 
-  <footer>Built by yukidsgn(おゆき)</footer>
+  <footer>Built by yukidsgn (おゆき)</footer>
 
   <!-- ?v= の数字を更新のたびに変えると、古いキャッシュを確実に回避できます -->
   <script src="app.js?v=20260614"></script>

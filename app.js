@@ -73,7 +73,7 @@ function pickScoreMessage(correctNum) {
 
 // ===== ページネーション設定 =====
 const PER_PAGE = 20; // 「間違いが多い順」「科目順」のときの1ページ件数
-let currentPage = 1; // 年モード時は「年ごとの何番目か」、その他は通常ページ
+let currentPage = 1;
 
 // ===== 状態 =====
 let questions = [];
@@ -321,9 +321,8 @@ function renderList() {
   }
 }
 
-// 年モード：1ページ＝1つの年。ページ送りで年を切り替える
+// 年モード：1ページ＝1つの年
 function renderListByYearPage(area, list) {
-  // 出現順に年ラベルをユニーク化
   const yearOrder = [];
   list.forEach(q => {
     const y = getYearLabel(q.id);
