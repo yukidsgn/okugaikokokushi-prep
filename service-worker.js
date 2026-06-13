@@ -1,5 +1,5 @@
 // File: service-worker.js
-const CACHE_NAME = "kakomon-v3";
+const CACHE_NAME = "kakomon-v4"; // ★ファイル更新のたびに数字を上げる
 const ASSETS = [
   "./index.html",
   "./app.js",
@@ -7,6 +7,7 @@ const ASSETS = [
   "./logo.png"
 ];
 
+// インストール：必要ファイルを事前キャッシュ
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache =>
@@ -16,6 +17,7 @@ self.addEventListener("install", e => {
   self.skipWaiting();
 });
 
+// 有効化：古いキャッシュを削除
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -26,7 +28,46 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
+  const req = e.request;
+  const url = new URL(req.url);
+
+  // GET以外は何もしない
+  if (req.method !== "GET") return;
+
+  // 自分のサイト以外（Googleスプレッドシートのcsv・Webフォント等）は素通し＝常に最新
+  if (url.origin !== self.location.origin) {
+    return; // ブラウザ既定の通信に任せる
+  }
+
+  // HTML / JS はネットワーク優先（最新を取りに行く → 取れたらキャッシュ更新）
+  const isHTML = req.mode === "navigate" ||
+                 url.pathname.endsWith(".html") ||
+                 url.pathname === "/" ||
+                 url.pathname.endsWith("/");
+  const isJS = url.pathname.endsWith(".js");
+
+  if (isHTML || isJS) {
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req)) // オフライン時はキャッシュ
+    );
+    return;
+  }
+
+  // その他（画像・manifest等）はキャッシュ優先（速度重視）。無ければ取得してキャッシュ
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    caches.match(req).then(cached => {
+      if (cached) return cached;
+      return fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+        return res;
+      });
+    })
   );
 });

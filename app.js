@@ -15,6 +15,66 @@ function subjectColor(name) {
 }
 const ALL_SUBJECTS = "__ALL__";
 
+// ===== 結果メッセージ（正解数別・ランダム） =====
+const SCORE_MESSAGES = {
+  0: [
+    "あきらめたらそこで試合終了ですよ",
+    "まだあわてるような時間じゃない",
+    "ひとにできて、きみだけにできないなんてことあるもんか"
+  ],
+  1: [
+    "逃げちゃダメだ　逃げちゃダメだ　逃げちゃダメだ",
+    "人は思い出を忘れることで生きていける。だが、決して忘れてはならないこともある",
+    "いちばんいけないのは 自分なんかだめだと思いこむことだよ"
+  ],
+  2: [
+    "落ちこぼれだって必死で努力すりゃエリートを超えることがあるかもよ",
+    "真の失敗とはッ！ 開拓の心を忘れ！ 困難に挑戦する事に無縁のところにいる者たちの事をいうのだッ！"
+  ],
+  3: [
+    "心を燃やせ",
+    "生殺与奪の権を他人に握らせるな！！"
+  ],
+  4: [
+    "認めたくないものだな。自分自身の、若さゆえの過ちというものを",
+    "うちには点を取れる奴がいる　オレが30点も40点も入れる必要はない　オレはチームの主役じゃなくていい\n(　　´з｀）⊂（´∀｀　　）なんでやねん！"
+  ],
+  5: [
+    "悪くない……むしろ良い",
+    "俺を天下に連れて行ってくれ"
+  ],
+  6: [
+    "そこにシビれる！あこがれるゥ！",
+    "屋外広告士に‼おれはなる‼"
+  ],
+  7: [
+    "覚悟は良いか？オレはできてる",
+    "一度あったことは忘れないものさ……想い出せないだけで。"
+  ],
+  8: [
+    "勝てばよかろうなのだァァァァッ！！",
+    "私の夢は私の夢で終わらなければならないって誰が言ったの？"
+  ],
+  9: [
+    "真実はいつもひとつ！",
+    "もうこれで終わってもいい だからありったけを"
+  ],
+  10: [
+    "おまえはもう合格している🌸",
+    "だいじょうぶます こわくない🌸"
+  ]
+};
+
+function pickScoreMessage(correctNum) {
+  const list = SCORE_MESSAGES[correctNum];
+  if (!list || list.length === 0) return "";
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+// ===== ページネーション設定 =====
+const PER_PAGE = 20; // 「間違いが多い順」「科目順」のときの1ページ件数
+let currentPage = 1; // 年モード時は「年ごとの何番目か」、その他は通常ページ
+
 // ===== 状態 =====
 let questions = [];
 let sortMode = "year_desc";  // 初期は出題年数_降順（新しい順）
@@ -71,7 +131,7 @@ function parseCSV(text) {
   return rows
     .filter(r => r.length >= 8 && r[idx("問題文")])
     .map((r, i) => ({
-      order: i, // スプレッドシートの並び順
+      order: i,
       id: r[idx("id")],
       subject: r[idx("科目")],
       question: r[idx("問題文")],
@@ -81,7 +141,7 @@ function parseCSV(text) {
     }));
 }
 
-// idの最初の4桁から年を取得（数値）
+// idの最初の4桁から年を取得
 function getYearNum(id) {
   const m = String(id).match(/^(\d{4})/);
   return m ? parseInt(m[1], 10) : 0;
@@ -148,6 +208,7 @@ function updateSortToggleLabel() {
 
 function setSort(mode) {
   sortMode = mode;
+  currentPage = 1;
   document.getElementById("sortMenu").classList.remove("open");
   updateSortToggleLabel();
   highlightSortMenu();
@@ -220,48 +281,116 @@ function showTab(tab) {
   if (listActive) renderList();
 }
 
-// ===== ① 一覧 =====
-function renderList() {
-  const area = document.getElementById("listArea");
-  area.innerHTML = "";
+// ===== ① 一覧（ページネーション対応） =====
+function getSortedList() {
   let list = [...questions];
-
   if (sortMode === "wrong") {
     list.sort((a, b) => getWrongCount(b.id) - getWrongCount(a.id));
-    list.forEach(q => area.appendChild(makeListItem(q)));
-
   } else if (sortMode === "subjectA" || sortMode === "subjectB" || sortMode === "subjectC") {
     const target = { subjectA: "問題A_関係法規", subjectB: "問題B_広告デザイン", subjectC: "問題C_設計・施工" }[sortMode];
-    // 選んだ科目を上に、それ以外を下に（各内はスプレッドシート順）
     list.sort((a, b) => {
       const aT = a.subject === target ? 0 : 1;
       const bT = b.subject === target ? 0 : 1;
       if (aT !== bT) return aT - bT;
       return a.order - b.order;
     });
-    list.forEach(q => area.appendChild(makeListItem(q)));
-
   } else {
-    // 年で並べ、年見出しを入れる
     const asc = sortMode === "year_asc";
     list.sort((a, b) => {
       const ya = getYearNum(a.id), yb = getYearNum(b.id);
       if (ya !== yb) return asc ? ya - yb : yb - ya;
-      return a.order - b.order; // 同年内はスプレッドシート順
-    });
-    let currentYear = null;
-    list.forEach(q => {
-      const year = getYearLabel(q.id);
-      if (year !== currentYear) {
-        currentYear = year;
-        const head = document.createElement("div");
-        head.className = "year-head";
-        head.textContent = (year === "その他") ? "その他" : year + "年 出題";
-        area.appendChild(head);
-      }
-      area.appendChild(makeListItem(q));
+      return a.order - b.order;
     });
   }
+  return list;
+}
+
+function isYearMode() {
+  return sortMode === "year_asc" || sortMode === "year_desc";
+}
+
+function renderList() {
+  const area = document.getElementById("listArea");
+  area.innerHTML = "";
+  const list = getSortedList();
+
+  if (isYearMode()) {
+    renderListByYearPage(area, list);
+  } else {
+    renderListByNumberPage(area, list);
+  }
+}
+
+// 年モード：1ページ＝1つの年。ページ送りで年を切り替える
+function renderListByYearPage(area, list) {
+  // 出現順に年ラベルをユニーク化
+  const yearOrder = [];
+  list.forEach(q => {
+    const y = getYearLabel(q.id);
+    if (!yearOrder.includes(y)) yearOrder.push(y);
+  });
+  const totalPages = yearOrder.length || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const targetYear = yearOrder[currentPage - 1];
+  const head = document.createElement("div");
+  head.className = "year-head";
+  head.textContent = (targetYear === "その他") ? "その他の問題" : targetYear + "年 出題";
+  area.appendChild(head);
+
+  list.filter(q => getYearLabel(q.id) === targetYear)
+      .forEach(q => area.appendChild(makeListItem(q)));
+
+  renderPager(totalPages, n => yearOrder[n - 1] === "その他" ? "他" : String(yearOrder[n - 1]).slice(2) + "年");
+}
+
+// 通常モード：固定件数でページ分け
+function renderListByNumberPage(area, list) {
+  const totalPages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const start = (currentPage - 1) * PER_PAGE;
+  const slice = list.slice(start, start + PER_PAGE);
+  slice.forEach(q => area.appendChild(makeListItem(q)));
+
+  renderPager(totalPages, n => String(n));
+}
+
+// Google検索風ページャ
+function renderPager(totalPages, labelFn) {
+  const pager = document.getElementById("pager");
+  pager.innerHTML = "";
+  if (totalPages <= 1) return;
+
+  const prev = document.createElement("button");
+  prev.className = "nav";
+  prev.textContent = "← 前へ";
+  prev.disabled = currentPage <= 1;
+  prev.onclick = () => goPage(currentPage - 1);
+  pager.appendChild(prev);
+
+  for (let n = 1; n <= totalPages; n++) {
+    const b = document.createElement("button");
+    b.textContent = labelFn ? labelFn(n) : String(n);
+    if (n === currentPage) b.classList.add("active");
+    b.onclick = () => goPage(n);
+    pager.appendChild(b);
+  }
+
+  const next = document.createElement("button");
+  next.className = "nav";
+  next.textContent = "次へ →";
+  next.disabled = currentPage >= totalPages;
+  next.onclick = () => goPage(currentPage + 1);
+  pager.appendChild(next);
+}
+
+function goPage(n) {
+  currentPage = n;
+  renderList();
+  window.scrollTo(0, 0);
 }
 
 function makeListItem(q) {
@@ -335,9 +464,11 @@ function showTestResult() {
   const view = document.getElementById("testResultView");
   view.style.display = "block";
   const total = testQueue.length;
+  const msg = pickScoreMessage(testCorrect);
   view.innerHTML = `
     <div class="card">
       <div class="score">${total}問中 ${testCorrect}問 正解！</div>
+      <div class="score-msg">${escapeHtml(msg).replace(/\n/g, "<br>")}</div>
       <button class="btn full" onclick="startTest('${escapeAttr(testSubject)}')">同じ科目でもう一度</button>
       <button class="btn full sub" onclick="backToTestSelect()">違う科目に変更</button>
       <button class="btn full sub" onclick="showTab('list')">最初の画面に戻る</button>
@@ -356,7 +487,6 @@ function backToTestSelect() {
   window.scrollTo(0, 0);
 }
 
-// テスト中断して科目選択に戻る
 function abortTest() {
   if (!confirm("テストを中断して科目選択に戻りますか？\n（このテストの進捗は保存されません）")) return;
   backToTestSelect();
@@ -370,7 +500,6 @@ function renderQuestion(container, q, onNext, isTest) {
     ? `<div class="progress">${testIndex + 1} / ${testQueue.length} 問目</div>`
     : "";
 
-  // 戻るボタン：一覧詳細は「一覧に戻る」、テストは「テストを中断して戻る」
   const backBtnHtml = isTest
     ? `<div class="back-bar"><button class="back-btn" id="backBtn">← テストを中断して戻る</button></div>`
     : `<div class="back-bar"><button class="back-btn" id="backBtn">← 戻る</button></div>`;
@@ -410,17 +539,15 @@ function renderQuestion(container, q, onNext, isTest) {
     choicesBox.appendChild(btn);
   });
 
-  // 戻るボタンの動作
   const backBtn = container.querySelector("#backBtn");
   if (backBtn) {
     backBtn.onclick = isTest ? abortTest : backToListFromDetail;
   }
 }
 
-// 「適切でないもの」「適切なもの」を太字に（安全な方法）
+// 「適切でないもの」「適切なもの」を太字に
 function emphasize(text) {
   let s = escapeHtml(text);
-  // 一旦プレースホルダに置換してから戻すことで二重置換を防ぐ
   s = s.replace(/適切でないもの/g, "\u0001");
   s = s.replace(/適切なもの/g, "\u0002");
   s = s.replace(/\u0001/g, "<b>適切でないもの</b>");
@@ -430,7 +557,9 @@ function emphasize(text) {
 
 function showFeedback(container, q, correct, onNext, isTest) {
   const fb = container.querySelector("#feedback");
-  const msg = correct ? "♪＼ 正解 ／♪" : "残念、不正解！ ( ｡•́ - •̀｡)ｼｭﾝ";
+  const msg = correct
+    ? "♪♪＼ 正解 ／♪♪<br>ｲｴ━━٩(*´ᗜ`)ㅅ(ˊᗜˋ*)و━━ｲ"
+    : "残念、不正解！ ( ｡•́ - •̀｡)ｼｭﾝ";
   let html = `<div class="result-box ${correct ? "ok" : "ng"}">${msg}</div>`;
   if (q.explanation) {
     html += `<div class="explanation"><b>解説</b><br>${escapeHtml(q.explanation)}</div>`;
