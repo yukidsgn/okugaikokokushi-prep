@@ -34,6 +34,8 @@
       background: var(--c-base); color: #fff; padding: 12px 16px;
       font-size: 18px; font-weight: 700; position: sticky; top: 0; z-index: 10;
       display: flex; align-items: center; gap: 10px;
+      font-family: "Zen Kaku Gothic New", "Noto Sans JP", sans-serif;
+      letter-spacing: 1px;
     }
     header img {
       width: 36px; height: 36px; border-radius: 50%;
@@ -107,6 +109,9 @@
     .loading { text-align: center; padding: 40px; color: #999; line-height: 1.6; }
 
     .select-title { font-weight: 700; text-align: center; }
+
+    /* 科目選択ボタンと「テストを始める」ボタンの間隔を広げる */
+    #startTestBtn { margin-top: 24px; }
 
     .sort-wrap { margin-bottom: 12px; }
     .sort-toggle {
@@ -206,6 +211,6 @@
   <footer>Built by yukidsgn (おゆき)</footer>
 
   <!-- ?v= の数字を更新のたびに変えると、古いキャッシュを確実に回避できます -->
-  <script src="app.js?v=20260614c"></script>
+  <script src="app.js?v=20260614d"></script>
 </body>
 </html>
