@@ -85,6 +85,10 @@ let testCorrect = 0;
 let testSubject = null;
 let savedScrollY = 0;
 
+// 一覧詳細：並び替え順の保持と現在位置
+let detailList = [];
+let detailIndex = -1;
+
 window.addEventListener("load", init);
 
 async function init() {
@@ -427,13 +431,29 @@ function makeListItem(q) {
 // ===== ① 詳細 =====
 function showDetail(id) {
   savedScrollY = window.scrollY;
-  const q = questions.find(x => x.id === id);
+  // 詳細を開いた時点の並び替え順を保持し、現在位置を記録
+  detailList = getSortedList();
+  detailIndex = detailList.findIndex(x => x.id === id);
+  const q = detailList[detailIndex];
   document.getElementById("listView").style.display = "none";
   setHeaderUI(false); // 問題を解く間は隠す
   const view = document.getElementById("detailView");
   view.style.display = "block";
-  renderQuestion(view, q, backToListFromDetail, false);
+  renderQuestion(view, q, goToNextDetail, false);
   window.scrollTo(0, 0);
+}
+
+// 一覧の並び順で次の問題へ。最後の問題なら一覧に戻る。
+function goToNextDetail() {
+  if (detailIndex >= 0 && detailIndex + 1 < detailList.length) {
+    detailIndex++;
+    const q = detailList[detailIndex];
+    const view = document.getElementById("detailView");
+    renderQuestion(view, q, goToNextDetail, false);
+    window.scrollTo(0, 0);
+  } else {
+    backToListFromDetail();
+  }
 }
 
 function backToListFromDetail() {
@@ -579,10 +599,20 @@ function showFeedback(container, q, correct, onNext, isTest) {
   if (q.explanation) {
     html += `<div class="explanation"><b>解説</b><br>${escapeHtml(q.explanation)}</div>`;
   }
-  const nextLabel = isTest
-    ? (testIndex + 1 < testQueue.length ? "次の問題へ" : "結果を見る")
-    : "一覧に戻る";
-  html += `<button class="btn full" id="nextBtn">${nextLabel}</button>`;
+
+  // ボタンのラベル分岐
+  let nextLabel;
+  if (isTest) {
+    nextLabel = (testIndex + 1 < testQueue.length) ? "次の問題へ" : "結果を見る";
+  } else {
+    // 一覧の並び順で次がある間は「次の問題へ」、最後の問題なら「一覧に戻る」
+    nextLabel = (detailIndex >= 0 && detailIndex + 1 < detailList.length)
+      ? "次の問題へ"
+      : "一覧に戻る";
+  }
+
+  // 解説上の余白（margin-top:10px）と同じスペースを「次の問題へ」ボタンの上にも確保
+  html += `<div style="margin-top:10px;"><button class="btn full" id="nextBtn" style="margin-top:0;">${nextLabel}</button></div>`;
   fb.innerHTML = html;
   fb.querySelector("#nextBtn").onclick = onNext;
 }
