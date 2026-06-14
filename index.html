@@ -38,8 +38,8 @@
       letter-spacing: 1px;
     }
     header img {
-      width: 36px; height: 36px; border-radius: 50%;
-      object-fit: cover; background: #fff;
+      width: 45px; height: 45px; border-radius: 50%;
+      object-fit: cover; background: transparent;
     }
     .container { padding: 16px; max-width: 720px; margin: 0 auto; width: 100%; flex: 1; }
 
@@ -97,7 +97,7 @@
     .choice-btn.correct { border-color: #2f9e44; background: #ebfbee; }
     .choice-btn.wrong { border-color: #e03131; background: #fff5f5; }
 
-    /* 正解・不正解：色を反転（背景を濃く、文字を白系に） */
+    /* 正解・不正解 */
     .result-box { padding: 12px; border-radius: 16px; margin-top: 12px; font-weight: 700; text-align: center; font-size: 17px; line-height: 1.6; }
     .result-box.ok { background: #2f9e44; color: #ebfbee; }
     .result-box.ng { background: #e03131; color: #fff5f5; }
@@ -144,7 +144,7 @@
       background: #b7a98a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
     }
 
-    /* ページネーション（Google検索風） */
+    /* ページネーション */
     .pager { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px; margin: 18px 0 8px; }
     .pager button {
       min-width: 38px; padding: 8px 14px; border: none; border-radius: 999px;
@@ -170,11 +170,11 @@
   </header>
   <div class="container">
 
-    <!-- 更新情報（手入力で書き換えてください） -->
+    <!-- 更新情報（手入力で書き換え） -->
     <div class="update-banner" id="updateBanner">
       <div class="ttl">📢 更新情報</div>
       <div class="date">2026年6月14日 更新</div>
-      <div class="body">2025年度の問題を追加しました。</div>
+      <div class="body">2025年度の問題を追加中。</div>
     </div>
 
     <div class="tabs" id="tabs">
@@ -211,6 +211,6 @@
   <footer>Built by yukidsgn (おゆき)</footer>
 
   <!-- ?v= の数字を更新のたびに変えると、古いキャッシュを確実に回避できます -->
-  <script src="app.js?v=20260614f"></script>
+  <script src="app.js?v=20260614g"></script>
 </body>
 </html>
