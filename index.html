@@ -101,11 +101,31 @@
     .q-image {
       display: block;
       max-width: 100%;
+      max-height: 60vh;       /* 画面高さの60%を上限に。縦長画像の暴走を防ぐ */
+      width: auto;
       height: auto;
+      object-fit: contain;    /* 比率を保ったまま枠内に収める */
       margin: 12px auto 0;
       border: 1px solid #e6ddcb;
       border-radius: 12px;
       background: #fff;
+      cursor: zoom-in;        /* 拡大できることを示す */
+    }
+
+    /* 画像拡大オーバーレイ */
+    .img-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.85);
+      z-index: 1000;
+      justify-content: center; align-items: center;
+      padding: 16px;
+    }
+    .img-overlay.open { display: flex; }
+    .img-overlay img {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
     }
 
     /* 正解・不正解 */
@@ -176,7 +196,7 @@
 </head>
 <body>
   <header>
-    <img src="logo.png?v=20260616a" alt="ロゴ" onerror="this.style.display='none'">
+    <img src="logo.png?v=20260616b" alt="ロゴ" onerror="this.style.display='none'">
     屋外広告士合格 App
   </header>
   <div class="container">
@@ -185,7 +205,7 @@
     <div class="update-banner" id="updateBanner">
       <div class="ttl">📢 更新情報</div>
       <div class="date">2026年6月16日 更新</div>
-      <div class="body">問題に画像が表示できるようになりました。2025年度の問題を追加中。</div>
+      <div class="body">2025年度の問題を追加中…</div>
     </div>
 
     <div class="tabs" id="tabs">
@@ -221,7 +241,12 @@
 
   <footer>Built by yukidsgn (おゆき)</footer>
 
+  <!-- 画像拡大オーバーレイ（タップで開閉） -->
+  <div class="img-overlay" id="imgOverlay" onclick="this.classList.remove('open')">
+    <img id="imgOverlayImg" alt="拡大画像">
+  </div>
+
   <!-- ?v= の数字を更新のたびに変えると、古いキャッシュを確実に回避できます -->
-  <script src="app.js?v=20260616a"></script>
+  <script src="app.js?v=20260616c"></script>
 </body>
 </html>

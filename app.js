@@ -563,7 +563,7 @@ function renderQuestion(container, q, onNext, isTest) {
   // 画像（画像URLがあるときだけ問題文の下に表示。無ければ何も出さない）
   const imgSrc = normalizeImageUrl(q.imageUrl);
   const imageHtml = imgSrc
-    ? `<img class="q-image" src="${escapeAttr(imgSrc)}" alt="問題画像" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';">`
+    ? `<img class="q-image" src="${escapeAttr(imgSrc)}" alt="問題画像" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';" onclick="openImage('${escapeAttr(imgSrc)}')">`
     : "";
 
   container.innerHTML = `
@@ -643,6 +643,14 @@ function showFeedback(container, q, correct, onNext, isTest) {
   html += `<div style="margin-top:10px;"><button class="btn full" id="nextBtn" style="margin-top:0;">${nextLabel}</button></div>`;
   fb.innerHTML = html;
   fb.querySelector("#nextBtn").onclick = onNext;
+}
+
+// ===== 画像拡大表示 =====
+function openImage(src) {
+  const overlay = document.getElementById("imgOverlay");
+  if (!overlay) return;
+  document.getElementById("imgOverlayImg").src = src;
+  overlay.classList.add("open");
 }
 
 // ===== ユーティリティ =====
