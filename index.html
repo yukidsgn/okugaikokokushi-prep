@@ -97,6 +97,17 @@
     .choice-btn.correct { border-color: #2f9e44; background: #ebfbee; }
     .choice-btn.wrong { border-color: #e03131; background: #fff5f5; }
 
+    /* 問題画像（問題文の下に表示。画像があるときだけ出る） */
+    .q-image {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 12px auto 0;
+      border: 1px solid #e6ddcb;
+      border-radius: 12px;
+      background: #fff;
+    }
+
     /* 正解・不正解 */
     .result-box { padding: 12px; border-radius: 16px; margin-top: 12px; font-weight: 700; text-align: center; font-size: 17px; line-height: 1.6; }
     .result-box.ok { background: #2f9e44; color: #ebfbee; }
@@ -165,7 +176,7 @@
 </head>
 <body>
   <header>
-    <img src="logo.png?v=20260614f" alt="ロゴ" onerror="this.style.display='none'">
+    <img src="logo.png?v=20260616a" alt="ロゴ" onerror="this.style.display='none'">
     屋外広告士合格 App
   </header>
   <div class="container">
@@ -173,8 +184,8 @@
     <!-- 更新情報（手入力で書き換え） -->
     <div class="update-banner" id="updateBanner">
       <div class="ttl">📢 更新情報</div>
-      <div class="date">2026年6月14日 更新</div>
-      <div class="body">2025年度の問題を追加中。</div>
+      <div class="date">2026年6月16日 更新</div>
+      <div class="body">問題に画像が表示できるようになりました。2025年度の問題を追加中。</div>
     </div>
 
     <div class="tabs" id="tabs">
@@ -211,6 +222,6 @@
   <footer>Built by yukidsgn (おゆき)</footer>
 
   <!-- ?v= の数字を更新のたびに変えると、古いキャッシュを確実に回避できます -->
-  <script src="app.js?v=20260614f"></script>
+  <script src="app.js?v=20260616a"></script>
 </body>
 </html>

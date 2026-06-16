@@ -132,6 +132,8 @@ function parseCSV(text) {
 
   const header = rows.shift().map(h => h.trim());
   const idx = name => header.indexOf(name);
+  // 「画像URL」列は無いシートでも動くよう、存在チェックして安全に取得
+  const imgIdx = idx("画像URL");
   return rows
     .filter(r => r.length >= 8 && r[idx("問題文")])
     .map((r, i) => ({
@@ -141,8 +143,27 @@ function parseCSV(text) {
       question: r[idx("問題文")],
       choices: [r[idx("選択肢1")], r[idx("選択肢2")], r[idx("選択肢3")], r[idx("選択肢4")]],
       answer: parseInt(r[idx("正解番号")], 10),
-      explanation: r[idx("解説")] || ""
+      explanation: r[idx("解説")] || "",
+      imageUrl: (imgIdx >= 0 ? (r[imgIdx] || "") : "").trim()
     }));
+}
+
+// Google Driveの共有リンクなどを、画像表示用の直リンクに変換する
+// （GitHub・Cloudinary等の通常の画像URLはそのまま返す）
+function normalizeImageUrl(url) {
+  if (!url) return "";
+  const u = url.trim();
+
+  // 例: https://drive.google.com/file/d/ファイルID/view?usp=sharing
+  let m = u.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (m) return "https://drive.google.com/uc?export=view&id=" + m[1];
+
+  // 例: https://drive.google.com/open?id=ファイルID
+  m = u.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if (m) return "https://drive.google.com/uc?export=view&id=" + m[1];
+
+  // それ以外（GitHub raw、Cloudinary、直URLなど）はそのまま
+  return u;
 }
 
 // idの最初の4桁から年を取得
@@ -417,7 +438,7 @@ function makeListItem(q) {
     <div class="meta">
       <div class="id-tag">${escapeHtml(q.id)}</div>
       <span class="subject-tag" style="background:${color};">${escapeHtml(q.subject)}</span>
-      <div>${escapeHtml(truncate(q.question, 40))}</div>
+      <div>${escapeHtml(truncate(q.question, 40))}${q.imageUrl ? ' 🖼️' : ''}</div>
     </div>
     <div class="counts">
       ${correct > 0 ? `<span class="badge-correct">◯ ${correct}</span>` : ""}
@@ -539,12 +560,19 @@ function renderQuestion(container, q, onNext, isTest) {
     ? `<div class="back-bar"><button class="back-btn" id="backBtn">← テストを中断して戻る</button></div>`
     : `<div class="back-bar"><button class="back-btn" id="backBtn">← 戻る</button></div>`;
 
+  // 画像（画像URLがあるときだけ問題文の下に表示。無ければ何も出さない）
+  const imgSrc = normalizeImageUrl(q.imageUrl);
+  const imageHtml = imgSrc
+    ? `<img class="q-image" src="${escapeAttr(imgSrc)}" alt="問題画像" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';">`
+    : "";
+
   container.innerHTML = `
     <div class="card" style="background:${color}55;">
       ${progressHtml}
       <div class="id-tag">${escapeHtml(q.id)}</div>
       <span class="subject-tag" style="background:${color};">${escapeHtml(q.subject)}</span>
       <p style="font-size:17px; line-height:1.7; margin:8px 0 0;">${emphasize(q.question)}</p>
+      ${imageHtml}
       <div id="choices" style="margin-top:12px;"></div>
       <div id="feedback"></div>
       ${backBtnHtml}

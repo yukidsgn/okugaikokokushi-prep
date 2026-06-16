@@ -1,5 +1,5 @@
 // File: service-worker.js
-const CACHE_NAME = "kakomon-v5"; // ★ファイル更新のたびに数字を上げる
+const CACHE_NAME = "kakomon-v6"; // ★ファイル更新のたびに数字を上げる
 const ASSETS = [
   "./index.html",
   "./app.js",
@@ -34,7 +34,7 @@ self.addEventListener("fetch", e => {
   // GET以外は何もしない
   if (req.method !== "GET") return;
 
-  // 自分のサイト以外（スプレッドシートのcsv・Webフォント等）は素通し＝常に最新
+  // 自分のサイト以外（スプレッドシートのcsv・Webフォント・外部画像等）は素通し＝常に最新
   if (url.origin !== self.location.origin) {
     return;
   }
